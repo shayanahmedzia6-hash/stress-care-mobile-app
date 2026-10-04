@@ -1,7 +1,6 @@
 package com.example.ui.theme
 
 import android.app.Activity
-import android.os.Build
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -12,43 +11,70 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-private val StressCareColorScheme = darkColorScheme(
-    primary = CyanPrimary,
+val StressCareLightColorScheme = lightColorScheme(
+    primary = LightPrimary,
+    onPrimary = Color.White,
+    primaryContainer = LightPrimaryLight,
+    onPrimaryContainer = LightPrimaryDark,
+    secondary = ColorSkinTemp,
+    onSecondary = Color.White,
+    secondaryContainer = ColorSkinTempBgLight,
+    onSecondaryContainer = ColorSkinTemp,
+    tertiary = ColorGSR,
+    onTertiary = Color.White,
+    background = LightBackground,
+    onBackground = LightTextPrimary,
+    surface = LightSurface,
+    onSurface = LightTextPrimary,
+    surfaceVariant = LightSurfaceHighlight,
+    onSurfaceVariant = LightTextSecondary,
+    outline = LightCardBorder,
+    outlineVariant = LightDivider,
+    error = StressHighColor,
+    onError = Color.White
+)
+
+val StressCareDarkColorScheme = darkColorScheme(
+    primary = DarkPrimary,
     onPrimary = Color.Black,
     primaryContainer = DarkSurfaceHighlight,
-    onPrimaryContainer = CyanPrimary,
-    secondary = PurpleAccent,
+    onPrimaryContainer = DarkPrimary,
+    secondary = ColorSkinTemp,
     onSecondary = Color.White,
     secondaryContainer = DarkSurfaceElevated,
-    onSecondaryContainer = PurpleAccent,
-    tertiary = EmeraldAccent,
+    onSecondaryContainer = ColorSkinTemp,
+    tertiary = ColorGSR,
     onTertiary = Color.Black,
     background = DarkBackground,
-    onBackground = TextPrimary,
+    onBackground = DarkTextPrimary,
     surface = DarkSurface,
-    onSurface = TextPrimary,
+    onSurface = DarkTextPrimary,
     surfaceVariant = DarkSurfaceElevated,
-    onSurfaceVariant = TextSecondary,
+    onSurfaceVariant = DarkTextSecondary,
     outline = DarkBorder,
+    outlineVariant = DarkDivider,
     error = StressHighColor,
     onError = Color.White
 )
 
 @Composable
 fun MyApplicationTheme(
-    darkTheme: Boolean = true, // Force modern sleek wellness dark theme
+    darkTheme: Boolean = false, // Defaults to clean modern Light Theme from stresscarepp.netlify.app
     content: @Composable () -> Unit
 ) {
-    val colorScheme = StressCareColorScheme
+    val colorScheme = if (darkTheme) StressCareDarkColorScheme else StressCareLightColorScheme
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as? Activity)?.window
             if (window != null) {
-                window.statusBarColor = DarkBackground.toArgb()
-                window.navigationBarColor = DarkBackground.toArgb()
-                WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
-                WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = false
+                val statusBarColor = if (darkTheme) DarkBackground else LightBgGradTop
+                val navBarColor = if (darkTheme) DarkBackground else LightSurface
+                window.statusBarColor = statusBarColor.toArgb()
+                window.navigationBarColor = navBarColor.toArgb()
+                val controller = WindowCompat.getInsetsController(window, view)
+                controller.isAppearanceLightStatusBars = !darkTheme
+                controller.isAppearanceLightNavigationBars = !darkTheme
             }
         }
     }

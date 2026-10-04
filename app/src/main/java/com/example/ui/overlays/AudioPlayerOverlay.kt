@@ -1,6 +1,11 @@
 package com.example.ui.overlays
 
-import androidx.compose.foundation.Canvas
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -21,14 +26,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Headphones
-import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.VolumeDown
 import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -42,26 +49,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.audio.PRESET_AUDIO_TRACKS
-import com.example.ui.theme.CyanPrimary
-import com.example.ui.theme.DarkBackground
-import com.example.ui.theme.DarkBorder
-import com.example.ui.theme.DarkSurface
-import com.example.ui.theme.DarkSurfaceElevated
-import com.example.ui.theme.PurpleAccent
-import com.example.ui.theme.TextMuted
-import com.example.ui.theme.TextPrimary
-import com.example.ui.theme.TextSecondary
 import com.example.viewmodel.StressCareViewModel
 
 @Composable
@@ -74,25 +69,42 @@ fun AudioPlayerOverlay(
     val currentTrack by audioEngine.currentTrack.collectAsState()
     val currentIndex by audioEngine.currentTrackIndex.collectAsState()
     val progress by audioEngine.playbackProgress.collectAsState()
-    val elapsedSeconds by audioEngine.elapsedSeconds.collectAsState()
-    val volume by audioEngine.volume.collectAsState()
-    val amplitudes by audioEngine.visualizerAmplitudes.collectAsState()
+    val volume by audioEngine.volumeLevel.collectAsState()
+    val isDarkMode by viewModel.isDarkMode.collectAsState()
 
-    val totalSecs = currentTrack.durationSeconds
+    val elapsedSeconds = (progress * currentTrack.durationSeconds).toInt()
     val elapsedStr = String.format("%02d:%02d", elapsedSeconds / 60, elapsedSeconds % 60)
-    val totalStr = String.format("%02d:%02d", totalSecs / 60, totalSecs % 60)
-    val themeColor = Color(currentTrack.themeColorHex)
+    val totalStr = String.format("%02d:%02d", currentTrack.durationSeconds / 60, currentTrack.durationSeconds % 60)
 
-    Surface(
+    val themeColor = Color(currentTrack.colorHex)
+
+    val infiniteTransition = rememberInfiniteTransition(label = "audio_bars")
+    val barPulse by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(600, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "barPulse"
+    )
+
+    val bgBrush = if (isDarkMode) {
+        Brush.verticalGradient(listOf(Color(0xFF0F172A), Color(0xFF0B0F19)))
+    } else {
+        Brush.verticalGradient(listOf(Color(0xFFEAF3FF), Color(0xFFF0F6FF), Color(0xFFF5F8FF)))
+    }
+
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .testTag("audio_player_overlay"),
-        color = DarkBackground
+            .background(bgBrush)
+            .testTag("audio_player_overlay")
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
+                .padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
@@ -104,13 +116,13 @@ fun AudioPlayerOverlay(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(themeColor.copy(alpha = 0.2f)),
+                            .size(38.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(themeColor.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -122,30 +134,32 @@ fun AudioPlayerOverlay(
                     }
                     Column {
                         Text(
-                            text = "RELAXATION SOUNDSCAPES",
+                            text = "Relaxation Soundscapes",
                             style = MaterialTheme.typography.titleMedium,
-                            color = TextPrimary,
+                            color = MaterialTheme.colorScheme.onSurface,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
                             text = "Offline Synthesized Ambience",
                             style = MaterialTheme.typography.bodySmall,
-                            color = TextSecondary
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
 
                 IconButton(onClick = onDismiss) {
-                    Icon(Icons.Default.Close, contentDescription = "Close", tint = TextSecondary)
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Close",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Big Artwork Vinyl Circle
+            // Visualizer Disk / Album Art
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = Modifier.size(190.dp)
+                modifier = Modifier.size(200.dp)
             ) {
                 Box(
                     modifier = Modifier
@@ -153,78 +167,64 @@ fun AudioPlayerOverlay(
                         .clip(CircleShape)
                         .background(
                             Brush.radialGradient(
-                                listOf(themeColor.copy(alpha = 0.35f), Color.Transparent)
+                                listOf(themeColor.copy(alpha = 0.25f), Color.Transparent)
                             )
                         )
                 )
 
                 Box(
                     modifier = Modifier
-                        .size(150.dp)
+                        .size(140.dp)
                         .clip(CircleShape)
-                        .background(DarkSurfaceElevated)
-                        .border(2.dp, themeColor, CircleShape),
+                        .background(MaterialTheme.colorScheme.surface)
+                        .border(2.dp, themeColor.copy(alpha = 0.5f), CircleShape)
+                        .shadow(8.dp, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.MusicNote,
-                        contentDescription = "Track Artwork",
+                        imageVector = Icons.Default.GraphicEq,
+                        contentDescription = "Equalizer",
                         tint = themeColor,
-                        modifier = Modifier.size(56.dp)
+                        modifier = Modifier.size(54.dp)
                     )
+                }
+
+                // Simulated spectrum bars around disk
+                if (isPlaying) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth(0.6f)
+                            .height(28.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        repeat(7) { idx ->
+                            val heightFrac = if (idx % 2 == 0) barPulse else (1.3f - barPulse).coerceIn(0.2f, 1f)
+                            Box(
+                                modifier = Modifier
+                                    .width(4.dp)
+                                    .height(24.dp * heightFrac)
+                                    .clip(RoundedCornerShape(2.dp))
+                                    .background(themeColor)
+                            )
+                        }
+                    }
                 }
             }
 
-            // Animated Equalizer Visualizer Bars (16 bars)
-            Canvas(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(44.dp)
-                    .padding(horizontal = 24.dp)
-            ) {
-                val barCount = amplitudes.size
-                val barWidth = size.width / (barCount * 1.5f)
-                val spacing = barWidth * 0.5f
-
-                amplitudes.forEachIndexed { i, amp ->
-                    val x = i * (barWidth + spacing)
-                    val barHeight = if (isPlaying) (size.height * amp).coerceAtLeast(6f) else 6f
-                    val y = size.height - barHeight
-
-                    drawRoundRect(
-                        color = themeColor.copy(alpha = 0.85f),
-                        topLeft = Offset(x, y),
-                        size = Size(barWidth, barHeight),
-                        cornerRadius = CornerRadius(4f, 4f)
-                    )
-                }
-            }
-
-            // Track Details
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
+            // Track Information
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = currentTrack.title,
                     style = MaterialTheme.typography.headlineSmall,
-                    color = TextPrimary,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.ExtraBold
                 )
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = currentTrack.category,
-                    style = MaterialTheme.typography.titleSmall,
-                    color = themeColor,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = currentTrack.description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary,
-                    textAlign = TextAlign.Center,
-                    lineHeight = 18.sp,
-                    modifier = Modifier.padding(horizontal = 16.dp)
+                    text = "${currentTrack.carrierNote} • ${currentTrack.beatType}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -236,7 +236,7 @@ fun AudioPlayerOverlay(
                     colors = SliderDefaults.colors(
                         thumbColor = themeColor,
                         activeTrackColor = themeColor,
-                        inactiveTrackColor = DarkBorder
+                        inactiveTrackColor = MaterialTheme.colorScheme.outlineVariant
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -245,8 +245,8 @@ fun AudioPlayerOverlay(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(text = elapsedStr, style = MaterialTheme.typography.labelSmall, color = TextMuted)
-                    Text(text = totalStr, style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                    Text(text = elapsedStr, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(text = totalStr, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
 
@@ -263,7 +263,7 @@ fun AudioPlayerOverlay(
                     Icon(
                         imageVector = Icons.Default.SkipPrevious,
                         contentDescription = "Previous",
-                        tint = TextPrimary,
+                        tint = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.size(32.dp)
                     )
                 }
@@ -276,13 +276,14 @@ fun AudioPlayerOverlay(
                         .clip(CircleShape)
                         .background(themeColor)
                         .clickable { audioEngine.togglePlayPause() }
-                        .testTag("audio_play_pause_button"),
+                        .testTag("audio_play_pause_button")
+                        .shadow(6.dp, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                         contentDescription = "Play/Pause",
-                        tint = Color.Black,
+                        tint = Color.White,
                         modifier = Modifier.size(36.dp)
                     )
                 }
@@ -296,7 +297,7 @@ fun AudioPlayerOverlay(
                     Icon(
                         imageVector = Icons.Default.SkipNext,
                         contentDescription = "Next",
-                        tint = TextPrimary,
+                        tint = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.size(32.dp)
                     )
                 }
@@ -310,18 +311,18 @@ fun AudioPlayerOverlay(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Icon(Icons.Default.VolumeDown, contentDescription = "Vol Down", tint = TextMuted, modifier = Modifier.size(20.dp))
+                Icon(Icons.Default.VolumeDown, contentDescription = "Vol Down", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
                 Slider(
                     value = volume,
                     onValueChange = { audioEngine.setVolume(it) },
                     colors = SliderDefaults.colors(
                         thumbColor = themeColor,
                         activeTrackColor = themeColor,
-                        inactiveTrackColor = DarkBorder
+                        inactiveTrackColor = MaterialTheme.colorScheme.outlineVariant
                     ),
                     modifier = Modifier.weight(1f)
                 )
-                Icon(Icons.Default.VolumeUp, contentDescription = "Vol Up", tint = TextMuted, modifier = Modifier.size(20.dp))
+                Icon(Icons.Default.VolumeUp, contentDescription = "Vol Up", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
             }
 
             // Track Selector Carousel at bottom
@@ -333,22 +334,21 @@ fun AudioPlayerOverlay(
                     val isSelected = idx == currentIndex
                     Surface(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(if (isSelected) themeColor.copy(alpha = 0.2f) else DarkSurface)
-                            .border(
-                                1.dp,
-                                if (isSelected) themeColor else DarkBorder,
-                                RoundedCornerShape(10.dp)
-                            )
+                            .clip(RoundedCornerShape(12.dp))
                             .clickable { audioEngine.selectTrack(idx) },
-                        color = Color.Transparent
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (isSelected) themeColor.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surface,
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            if (isSelected) themeColor else MaterialTheme.colorScheme.outlineVariant
+                        )
                     ) {
                         Text(
                             text = track.title,
                             style = MaterialTheme.typography.labelMedium,
-                            color = if (isSelected) themeColor else TextSecondary,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                            color = if (isSelected) themeColor else MaterialTheme.colorScheme.onSurface,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
                         )
                     }
                 }

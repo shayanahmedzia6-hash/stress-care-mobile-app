@@ -13,6 +13,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -28,7 +29,10 @@ import com.example.ui.overlays.AudioPlayerOverlay
 import com.example.ui.overlays.AuthOverlay
 import com.example.ui.overlays.BlePairingModal
 import com.example.ui.overlays.CalibrationModal
+import com.example.ui.overlays.FeedbackOverlay
 import com.example.ui.overlays.GuidedBreathingOverlay
+import com.example.ui.overlays.MigraineRiskOverlay
+import com.example.ui.overlays.NotificationsOverlay
 import com.example.ui.overlays.OnboardingOverlay
 import com.example.ui.overlays.PssQuestionnaireOverlay
 import com.example.ui.screens.AnalyticsScreen
@@ -36,7 +40,6 @@ import com.example.ui.screens.DashboardScreen
 import com.example.ui.screens.InterventionsScreen
 import com.example.ui.screens.MonitoringScreen
 import com.example.ui.screens.ProfileScreen
-import com.example.ui.theme.DarkBackground
 import com.example.ui.theme.MyApplicationTheme
 import com.example.viewmodel.ActiveOverlay
 import com.example.viewmodel.MainTab
@@ -48,8 +51,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MyApplicationTheme {
-                StressCareApp()
+            val vm: StressCareViewModel = viewModel()
+            val isDarkMode by vm.isDarkMode.collectAsState()
+
+            MyApplicationTheme(darkTheme = isDarkMode) {
+                StressCareApp(viewModel = vm)
             }
         }
     }
@@ -78,7 +84,7 @@ fun StressCareApp(viewModel: StressCareViewModel = viewModel()) {
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = DarkBackground,
+        containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             if (activeOverlay == ActiveOverlay.NONE) {
@@ -149,6 +155,24 @@ fun StressCareApp(viewModel: StressCareViewModel = viewModel()) {
                 }
                 ActiveOverlay.PSS_QUESTIONNAIRE -> {
                     PssQuestionnaireOverlay(
+                        viewModel = viewModel,
+                        onDismiss = { viewModel.closeOverlay() }
+                    )
+                }
+                ActiveOverlay.MIGRAINE_DETAIL -> {
+                    MigraineRiskOverlay(
+                        viewModel = viewModel,
+                        onDismiss = { viewModel.closeOverlay() }
+                    )
+                }
+                ActiveOverlay.NOTIFICATIONS -> {
+                    NotificationsOverlay(
+                        viewModel = viewModel,
+                        onDismiss = { viewModel.closeOverlay() }
+                    )
+                }
+                ActiveOverlay.FEEDBACK -> {
+                    FeedbackOverlay(
                         viewModel = viewModel,
                         onDismiss = { viewModel.closeOverlay() }
                     )

@@ -1,7 +1,6 @@
 package com.example.ui.overlays
 
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -25,6 +24,8 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +37,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
@@ -43,15 +45,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.ui.theme.CyanPrimary
-import com.example.ui.theme.DarkBackground
-import com.example.ui.theme.DarkBorder
-import com.example.ui.theme.EmeraldAccent
-import com.example.ui.theme.PurpleAccent
-import com.example.ui.theme.RosePulse
-import com.example.ui.theme.TextMuted
-import com.example.ui.theme.TextPrimary
-import com.example.ui.theme.TextSecondary
+import com.example.ui.theme.ColorHeartRate
+import com.example.ui.theme.StatusOnlineGreen
 import com.example.viewmodel.BreathingPhase
 import com.example.viewmodel.StressCareViewModel
 
@@ -61,43 +56,52 @@ fun GuidedBreathingOverlay(
     onDismiss: () -> Unit
 ) {
     val phase by viewModel.breathingPhase.collectAsState()
-    val progress by viewModel.breathingPhaseProgress.collectAsState()
-    val totalSecsRemaining by viewModel.breathingTotalRemainingSeconds.collectAsState()
+    val secondsInPhase by viewModel.secondsInPhase.collectAsState()
+    val totalSecondsRemaining by viewModel.breathingTotalSecondsRemaining.collectAsState()
     val cycleCount by viewModel.breathingCycleCount.collectAsState()
     val liveVitals by viewModel.bleManager.liveVitals.collectAsState()
+    val isDarkMode by viewModel.isDarkMode.collectAsState()
 
-    val formattedRemaining = String.format("%02d:%02d", totalSecsRemaining / 60, totalSecsRemaining % 60)
-
-    val targetSize = when (phase) {
-        BreathingPhase.INHALE -> 230.dp
-        BreathingPhase.HOLD_IN -> 230.dp
-        BreathingPhase.EXHALE -> 130.dp
-        BreathingPhase.HOLD_OUT -> 130.dp
+    val targetSphereScale = when (phase) {
+        BreathingPhase.INHALE -> 1.0f
+        BreathingPhase.HOLD_IN -> 1.0f
+        BreathingPhase.EXHALE -> 0.45f
+        BreathingPhase.HOLD_OUT -> 0.45f
     }
 
-    val animatedSize by animateDpAsState(
-        targetValue = targetSize,
+    val animatedSphereScale by animateFloatAsState(
+        targetValue = targetSphereScale,
         animationSpec = tween(durationMillis = 3800, easing = FastOutSlowInEasing),
-        label = "circle_size"
+        label = "breathingSphereScale"
     )
 
-    val themeColor = when (phase) {
-        BreathingPhase.INHALE -> CyanPrimary
-        BreathingPhase.HOLD_IN -> PurpleAccent
-        BreathingPhase.EXHALE -> EmeraldAccent
-        BreathingPhase.HOLD_OUT -> Color(0xFF38BDF8)
+    val currentPhaseColor = when (phase) {
+        BreathingPhase.INHALE -> Color(0xFF2563EB)
+        BreathingPhase.HOLD_IN -> Color(0xFF7C3AED)
+        BreathingPhase.EXHALE -> StatusOnlineGreen
+        BreathingPhase.HOLD_OUT -> Color(0xFF0D9488)
     }
 
-    Surface(
+    val mins = totalSecondsRemaining / 60
+    val secs = totalSecondsRemaining % 60
+    val formattedRemaining = String.format("%02d:%02d", mins, secs)
+
+    val bgBrush = if (isDarkMode) {
+        Brush.verticalGradient(listOf(Color(0xFF0F172A), Color(0xFF0B0F19)))
+    } else {
+        Brush.verticalGradient(listOf(Color(0xFFEAF3FF), Color(0xFFF0F6FF), Color(0xFFF5F8FF)))
+    }
+
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .testTag("guided_breathing_overlay"),
-        color = DarkBackground
+            .background(bgBrush)
+            .testTag("guided_breathing_overlay")
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
+                .padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
@@ -109,47 +113,48 @@ fun GuidedBreathingOverlay(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(CyanPrimary.copy(alpha = 0.2f)),
+                            .size(38.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Color(0xFFDBEAFE)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.Air,
                             contentDescription = null,
-                            tint = CyanPrimary,
-                            modifier = Modifier.size(20.dp)
+                            tint = Color(0xFF2563EB),
+                            modifier = Modifier.size(22.dp)
                         )
                     }
                     Column {
                         Text(
-                            text = "BOX BREATHING (4-4-4-4)",
+                            text = "Box Breathing (4-4-4-4)",
                             style = MaterialTheme.typography.titleMedium,
-                            color = TextPrimary,
+                            color = MaterialTheme.colorScheme.onSurface,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
                             text = "Cycle $cycleCount • $formattedRemaining remaining",
                             style = MaterialTheme.typography.bodySmall,
-                            color = TextSecondary
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
 
                 IconButton(onClick = onDismiss) {
-                    Icon(Icons.Default.Close, contentDescription = "Exit", tint = TextSecondary)
+                    Icon(Icons.Default.Close, contentDescription = "Exit", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
 
             // Live HR Monitor Badge
             Surface(
                 shape = RoundedCornerShape(20.dp),
-                color = DarkBorder.copy(alpha = 0.5f),
-                modifier = Modifier.border(1.dp, RosePulse.copy(alpha = 0.3f), RoundedCornerShape(20.dp))
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 2.dp,
+                modifier = Modifier.border(1.dp, ColorHeartRate.copy(alpha = 0.3f), RoundedCornerShape(20.dp))
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
@@ -159,13 +164,14 @@ fun GuidedBreathingOverlay(
                     Icon(
                         imageVector = Icons.Default.Favorite,
                         contentDescription = "Pulse",
-                        tint = RosePulse,
+                        tint = ColorHeartRate,
                         modifier = Modifier.size(16.dp)
                     )
                     Text(
                         text = "Pulse: ${liveVitals.heartRate} BPM (Stabilizing)",
                         style = MaterialTheme.typography.labelMedium,
-                        color = TextPrimary
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
@@ -173,96 +179,90 @@ fun GuidedBreathingOverlay(
             // Central Animated Breathing Sphere
             Box(
                 contentAlignment = Alignment.Center,
-                modifier = Modifier.size(260.dp)
+                modifier = Modifier.size(240.dp)
             ) {
                 // Outer subtle aura
                 Box(
                     modifier = Modifier
-                        .size(animatedSize + 30.dp)
+                        .size((240.dp * animatedSphereScale).coerceAtLeast(100.dp))
                         .clip(CircleShape)
-                        .background(
-                            Brush.radialGradient(
-                                listOf(themeColor.copy(alpha = 0.25f), Color.Transparent)
-                            )
-                        )
+                        .background(currentPhaseColor.copy(alpha = 0.12f))
                 )
 
-                // Main expanding sphere
+                // Middle pulsing ring
                 Box(
                     modifier = Modifier
-                        .size(animatedSize)
+                        .size((200.dp * animatedSphereScale).coerceAtLeast(80.dp))
+                        .clip(CircleShape)
+                        .background(currentPhaseColor.copy(alpha = 0.22f))
+                        .border(2.dp, currentPhaseColor.copy(alpha = 0.6f), CircleShape)
+                )
+
+                // Core Sphere
+                Box(
+                    modifier = Modifier
+                        .size((150.dp * animatedSphereScale).coerceAtLeast(60.dp))
                         .clip(CircleShape)
                         .background(
                             Brush.radialGradient(
-                                listOf(themeColor.copy(alpha = 0.85f), themeColor.copy(alpha = 0.4f))
+                                listOf(
+                                    currentPhaseColor.copy(alpha = 0.9f),
+                                    currentPhaseColor.copy(alpha = 0.6f)
+                                )
                             )
                         )
-                        .border(3.dp, themeColor, CircleShape),
+                        .shadow(12.dp, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        Text(
-                            text = when (phase) {
-                                BreathingPhase.INHALE -> "INHALE"
-                                BreathingPhase.HOLD_IN -> "HOLD"
-                                BreathingPhase.EXHALE -> "EXHALE"
-                                BreathingPhase.HOLD_OUT -> "REST"
-                            },
-                            style = MaterialTheme.typography.headlineMedium,
-                            color = Color.White,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 1.5.sp
-                        )
-                        Text(
-                            text = "4 Seconds",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.White.copy(alpha = 0.8f)
-                        )
-                    }
+                    Text(
+                        text = "$secondsInPhase",
+                        style = MaterialTheme.typography.displayMedium,
+                        color = Color.White,
+                        fontWeight = FontWeight.Black
+                    )
                 }
             }
 
-            // Phase Instruction Text
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
+            // Phase Instruction Label
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = phase.name.replace("_", " "),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = currentPhaseColor,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 1.sp
+                )
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = phase.label,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = themeColor,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center
                 )
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Follow the expanding circle. Gentle haptics guide each phase transition.",
+                    text = "Autonomic tone balances as exhalations slow heart rhythm",
                     style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary,
-                    textAlign = TextAlign.Center
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
-            // Complete Session Button
+            // Stop / Finish Button
             Button(
                 onClick = onDismiss,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp)
-                    .testTag("guided_breathing_complete_button"),
+                    .height(48.dp)
+                    .testTag("guided_breathing_stop_button"),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = CyanPrimary,
-                    contentColor = Color.Black
-                )
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onSurface
+                ),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
             ) {
-                Text(
-                    text = "End Exercise",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                Text("End Breathing Exercise", fontWeight = FontWeight.Bold)
             }
         }
     }

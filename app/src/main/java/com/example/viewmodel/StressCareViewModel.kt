@@ -49,7 +49,10 @@ enum class ActiveOverlay {
     CALIBRATION,
     GUIDED_BREATHING,
     AUDIO_PLAYER,
-    PSS_QUESTIONNAIRE
+    PSS_QUESTIONNAIRE,
+    MIGRAINE_DETAIL,
+    NOTIFICATIONS,
+    FEEDBACK
 }
 
 enum class BreathingPhase(val label: String, val seconds: Int) {
@@ -89,6 +92,18 @@ class StressCareViewModel(application: Application) : AndroidViewModel(applicati
 
     private val _activeOverlay = MutableStateFlow(ActiveOverlay.NONE)
     val activeOverlay: StateFlow<ActiveOverlay> = _activeOverlay.asStateFlow()
+
+    // Theme Mode: Defaults to false (Light Theme matching stresscarepp.netlify.app)
+    private val _isDarkMode = MutableStateFlow(false)
+    val isDarkMode: StateFlow<Boolean> = _isDarkMode.asStateFlow()
+
+    fun toggleDarkMode() {
+        _isDarkMode.value = !_isDarkMode.value
+    }
+
+    fun setDarkMode(dark: Boolean) {
+        _isDarkMode.value = dark
+    }
 
     // History and PSS Flows from Room
     val allSessions: StateFlow<List<StressSessionEntity>> = repository.allSessions
@@ -197,6 +212,18 @@ class StressCareViewModel(application: Application) : AndroidViewModel(applicati
             calibrationJob?.cancel()
         }
         _activeOverlay.value = ActiveOverlay.NONE
+    }
+
+    fun openMigraineDetail() {
+        _activeOverlay.value = ActiveOverlay.MIGRAINE_DETAIL
+    }
+
+    fun openNotifications() {
+        _activeOverlay.value = ActiveOverlay.NOTIFICATIONS
+    }
+
+    fun openFeedback() {
+        _activeOverlay.value = ActiveOverlay.FEEDBACK
     }
 
     fun setAnalyticsTimeRange(range: String) {

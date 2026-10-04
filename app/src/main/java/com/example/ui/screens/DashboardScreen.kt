@@ -26,21 +26,27 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.DirectionsRun
+import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Air
 import androidx.compose.material.icons.filled.BarChart
-import androidx.compose.material.icons.filled.BatteryChargingFull
+import androidx.compose.material.icons.filled.Battery5Bar
 import androidx.compose.material.icons.filled.BluetoothConnected
-import androidx.compose.material.icons.filled.CloudSync
+import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.MonitorHeart
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.RateReview
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.SignalCellularAlt
+import androidx.compose.material.icons.filled.Spa
 import androidx.compose.material.icons.filled.Thermostat
-import androidx.compose.material.icons.filled.TrendingUp
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Waves
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -53,6 +59,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
@@ -63,25 +70,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ble.StressCategory
 import com.example.ui.components.SparklineWaveform
-import com.example.ui.theme.AmberWarning
 import com.example.ui.theme.ColorGSR
+import com.example.ui.theme.ColorGSRBgLight
 import com.example.ui.theme.ColorHeartRate
+import com.example.ui.theme.ColorHeartRateBgLight
 import com.example.ui.theme.ColorMotion
+import com.example.ui.theme.ColorMotionBgLight
 import com.example.ui.theme.ColorSkinTemp
-import com.example.ui.theme.CyanPrimary
-import com.example.ui.theme.DarkBorder
-import com.example.ui.theme.DarkSurface
-import com.example.ui.theme.DarkSurfaceElevated
-import com.example.ui.theme.DarkSurfaceHighlight
-import com.example.ui.theme.EmeraldAccent
-import com.example.ui.theme.PurpleAccent
-import com.example.ui.theme.RosePulse
+import com.example.ui.theme.ColorSkinTempBgLight
+import com.example.ui.theme.MigraineBorderLight
+import com.example.ui.theme.MigraineCardBgEnd
+import com.example.ui.theme.MigraineCardBgStart
+import com.example.ui.theme.MigraineTextLight
+import com.example.ui.theme.StatusOnlineGreen
 import com.example.ui.theme.StressHighColor
 import com.example.ui.theme.StressLowColor
 import com.example.ui.theme.StressModerateColor
-import com.example.ui.theme.TextMuted
-import com.example.ui.theme.TextPrimary
-import com.example.ui.theme.TextSecondary
 import com.example.viewmodel.ActiveOverlay
 import com.example.viewmodel.MainTab
 import com.example.viewmodel.StressCareViewModel
@@ -97,7 +101,7 @@ fun DashboardScreen(
     val liveVitals by viewModel.bleManager.liveVitals.collectAsState()
     val connectedDevice by viewModel.bleManager.connectedDevice.collectAsState()
     val isConnected by viewModel.bleManager.isConnected.collectAsState()
-    val isSyncing by viewModel.isSyncing.collectAsState()
+    val isDarkMode by viewModel.isDarkMode.collectAsState()
 
     val hrWaveform by viewModel.bleManager.hrWaveform.collectAsState()
     val gsrWaveform by viewModel.bleManager.gsrWaveform.collectAsState()
@@ -105,6 +109,7 @@ fun DashboardScreen(
     val motionWaveform by viewModel.bleManager.motionWaveform.collectAsState()
 
     val currentDateStr = SimpleDateFormat("EEEE, MMM d", Locale.getDefault()).format(Date())
+    val currentTimeStr = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date())
 
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val pulseAlpha by infiniteTransition.animateFloat(
@@ -117,671 +122,669 @@ fun DashboardScreen(
         label = "pulseAlpha"
     )
 
-    LazyColumn(
+    val bgBrush = if (isDarkMode) {
+        Brush.verticalGradient(listOf(Color(0xFF0F172A), Color(0xFF0B0F19)))
+    } else {
+        Brush.verticalGradient(
+            listOf(
+                Color(0xFFDEEEFF),
+                Color(0xFFF0F6FF),
+                Color(0xFFF5F8FF)
+            )
+        )
+    }
+
+    Box(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(top = 16.dp, bottom = 96.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .background(bgBrush)
+            .testTag("dashboard_screen")
     ) {
-        // 1. Top Header
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = currentDateStr.uppercase(),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = CyanPrimary,
-                        fontWeight = FontWeight.SemiBold,
-                        letterSpacing = 1.2.sp
-                    )
-                    Text(
-                        text = "Hello, Alex 👋",
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = TextPrimary,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(
-                        onClick = { viewModel.triggerCloudSync() },
-                        modifier = Modifier
-                            .size(42.dp)
-                            .clip(CircleShape)
-                            .background(DarkSurfaceElevated)
-                            .border(1.dp, DarkBorder, CircleShape)
-                            .testTag("dashboard_sync_button")
-                    ) {
-                        if (isSyncing) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(18.dp),
-                                color = CyanPrimary,
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Icon(
-                                imageVector = Icons.Default.CloudSync,
-                                contentDescription = "Sync Cloud",
-                                tint = CyanPrimary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .size(42.dp)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.linearGradient(listOf(CyanPrimary, PurpleAccent))
-                            )
-                            .clickable { viewModel.selectTab(MainTab.PROFILE) }
-                            .testTag("dashboard_profile_avatar"),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "AM",
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
-                        )
-                    }
-                }
-            }
-        }
-
-        // 2. Connected Device Card
-        item {
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .border(1.dp, DarkBorder, RoundedCornerShape(16.dp))
-                    .clickable { viewModel.setOverlay(ActiveOverlay.BLE_PAIRING) }
-                    .testTag("dashboard_device_card"),
-                color = DarkSurface
-            ) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 14.dp),
+            contentPadding = PaddingValues(top = 12.dp, bottom = 96.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            // 1. Top Header: Greeting + Theme Switcher + Notifications + Avatar
+            item {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(14.dp),
+                        .padding(vertical = 4.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    Column {
+                        Text(
+                            text = currentDateStr,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 11.5.sp
+                        )
+                        Text(
+                            text = "Hello, Alex 👋",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 22.sp
+                        )
+                    }
+
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Box(
+                        // Light / Dark Mode Toggle Button
+                        IconButton(
+                            onClick = { viewModel.toggleDarkMode() },
                             modifier = Modifier
-                                .size(44.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(CyanPrimary.copy(alpha = 0.15f))
-                                .border(1.dp, CyanPrimary.copy(alpha = 0.3f), RoundedCornerShape(12.dp)),
-                            contentAlignment = Alignment.Center
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surface)
+                                .testTag("dashboard_theme_toggle")
                         ) {
                             Icon(
-                                imageVector = Icons.Default.BluetoothConnected,
-                                contentDescription = "BLE Band",
-                                tint = CyanPrimary,
-                                modifier = Modifier.size(24.dp)
+                                imageVector = if (isDarkMode) Icons.Default.LightMode else Icons.Default.DarkMode,
+                                contentDescription = "Toggle Theme",
+                                tint = if (isDarkMode) Color(0xFFFBBF24) else Color(0xFF2563EB),
+                                modifier = Modifier.size(20.dp)
                             )
                         }
 
-                        Column {
+                        // Notifications Bell Button
+                        IconButton(
+                            onClick = { viewModel.openNotifications() },
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surface)
+                                .testTag("dashboard_notifications_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Notifications,
+                                contentDescription = "Notifications",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
+                        // User Avatar
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF2563EB))
+                                .clickable { viewModel.selectTab(MainTab.PROFILE) }
+                                .testTag("dashboard_profile_avatar"),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "AM",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp
+                            )
+                        }
+                    }
+                }
+            }
+
+            // 2. Connected Wearable Card (matching stresscarepp.netlify.app)
+            item {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(4.dp, RoundedCornerShape(16.dp))
+                        .clickable { viewModel.setOverlay(ActiveOverlay.BLE_PAIRING) }
+                        .testTag("dashboard_wearable_card"),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(if (isDarkMode) Color(0xFF1E293B) else Color(0xFFF0F4FA)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.BluetoothConnected,
+                                    contentDescription = "Smart Band",
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+
+                            Column {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Text(
+                                        text = connectedDevice?.name ?: "StressCare Band 2.0",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .size(8.dp)
+                                            .clip(CircleShape)
+                                            .background(if (isConnected) StatusOnlineGreen else Color.Gray)
+                                    )
+                                }
+                                Text(
+                                    text = if (isConnected) "Live Stream • ESP32-S3 BLE" else "Disconnected • Tap to scan",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = if (isConnected) Color(0xFF2563EB) else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = 10.5.sp
+                                )
+                            }
+                        }
+
+                        // Battery & Signal Stats
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(3.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Battery5Bar,
+                                    contentDescription = null,
+                                    tint = StatusOnlineGreen,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = "${liveVitals.batteryPercent}%",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(3.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.SignalCellularAlt,
+                                    contentDescription = null,
+                                    tint = Color(0xFF2563EB),
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Text(
+                                    text = "${connectedDevice?.rssi ?: -62} dBm",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = 10.sp
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 3. Stress Level Card with Circular Gauge
+            item {
+                val stressScore = liveVitals.stressScore
+                val stressCategory = liveVitals.stressCategory
+
+                val statusLabel = when (stressCategory) {
+                    StressCategory.LOW -> "Low Stress"
+                    StressCategory.MODERATE -> "Moderate Stress"
+                    StressCategory.HIGH -> "High Stress"
+                }
+
+                val statusColor = when (stressCategory) {
+                    StressCategory.LOW -> StressLowColor
+                    StressCategory.MODERATE -> StressModerateColor
+                    StressCategory.HIGH -> StressHighColor
+                }
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(4.dp, RoundedCornerShape(20.dp))
+                        .clickable { viewModel.selectTab(MainTab.MONITORING) }
+                        .testTag("dashboard_stress_card"),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isDarkMode) Color(0xFF1E293B) else Color(0xFFE8F3FF)
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        // Gauge with percentage
+                        Box(
+                            modifier = Modifier.size(108.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                progress = { 1f },
+                                modifier = Modifier.size(100.dp),
+                                color = if (isDarkMode) Color(0xFF334155) else Color(0xFFDCE8F8),
+                                strokeWidth = 10.dp,
+                                strokeCap = StrokeCap.Round
+                            )
+                            CircularProgressIndicator(
+                                progress = { (stressScore / 100f).coerceIn(0.05f, 1f) },
+                                modifier = Modifier.size(100.dp),
+                                color = statusColor,
+                                strokeWidth = 10.dp,
+                                strokeCap = StrokeCap.Round
+                            )
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Row(verticalAlignment = Alignment.Top) {
+                                    Text(
+                                        text = "$stressScore",
+                                        style = MaterialTheme.typography.headlineMedium,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        lineHeight = 1.sp
+                                    )
+                                    Text(
+                                        text = "%",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                                Text(
+                                    text = "Autonomic Index",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = 9.sp
+                                )
+                            }
+                        }
+
+                        // Stress Info
+                        Column(modifier = Modifier.weight(1f)) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                Text(
-                                    text = connectedDevice?.name ?: "StressCare Band 2.0",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = TextPrimary,
-                                    fontWeight = FontWeight.SemiBold
+                                Icon(
+                                    imageVector = Icons.Default.Waves,
+                                    contentDescription = null,
+                                    tint = Color(0xFF2563EB),
+                                    modifier = Modifier.size(14.dp)
                                 )
-                                Box(
-                                    modifier = Modifier
-                                        .size(8.dp)
-                                        .clip(CircleShape)
-                                        .background(if (isConnected) EmeraldAccent else Color.Gray)
+                                Text(
+                                    text = statusLabel,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = if (isConnected) "Live Stream • ESP32-S3 BLE" else "Disconnected",
+                                text = when (stressCategory) {
+                                    StressCategory.LOW -> "Autonomic nervous system is balanced and restorative."
+                                    StressCategory.MODERATE -> "Mild sympathetic arousal observed. Skin conductance slightly elevated."
+                                    StressCategory.HIGH -> "Acute sympathetic stress state detected. Recommended brief breathing break."
+                                },
                                 style = MaterialTheme.typography.bodySmall,
-                                color = if (isConnected) EmeraldAccent else TextMuted
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                lineHeight = 16.sp
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "Predicted from: HR, GSR & Temp",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color(0xFF2563EB),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 10.5.sp
                             )
                         }
                     }
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.BatteryChargingFull,
-                            contentDescription = "Battery",
-                            tint = EmeraldAccent,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Text(
-                            text = "${liveVitals.batteryPercent}%",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = TextPrimary,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
                 }
             }
-        }
 
-        // 3. Live Stress Circle Gauge Card
-        item {
-            val stressColor = when (liveVitals.stressCategory) {
-                StressCategory.LOW -> StressLowColor
-                StressCategory.MODERATE -> StressModerateColor
-                StressCategory.HIGH -> StressHighColor
+            // 4. 4 Metric Cards with Preserved Real-Time Sparkline Waveforms
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    // Metric 1: Heart Rate
+                    DashboardMetricMiniCard(
+                        title = "Heart Rate",
+                        value = "${liveVitals.heartRate}",
+                        unit = "BPM",
+                        sub = "Resting: 60-100",
+                        icon = Icons.Default.Favorite,
+                        iconColor = ColorHeartRate,
+                        iconBg = if (isDarkMode) ColorHeartRate.copy(alpha = 0.2f) else ColorHeartRateBgLight,
+                        waveform = hrWaveform,
+                        waveColor = ColorHeartRate,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    // Metric 2: Skin Conductance
+                    DashboardMetricMiniCard(
+                        title = "Skin Cond.",
+                        value = String.format(Locale.US, "%.1f", liveVitals.gsrMicrosiemens),
+                        unit = "µS",
+                        sub = "Tonic: Mod",
+                        icon = Icons.Default.Waves,
+                        iconColor = ColorGSR,
+                        iconBg = if (isDarkMode) ColorGSR.copy(alpha = 0.2f) else ColorGSRBgLight,
+                        waveform = gsrWaveform,
+                        waveColor = ColorGSR,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    // Metric 3: Skin Temp
+                    DashboardMetricMiniCard(
+                        title = "Skin Temp",
+                        value = String.format(Locale.US, "%.1f", liveVitals.skinTempCelsius),
+                        unit = "°C",
+                        sub = "Normal",
+                        icon = Icons.Default.Thermostat,
+                        iconColor = ColorSkinTemp,
+                        iconBg = if (isDarkMode) ColorSkinTemp.copy(alpha = 0.2f) else ColorSkinTempBgLight,
+                        waveform = tempWaveform,
+                        waveColor = ColorSkinTemp,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    // Metric 4: Motion
+                    DashboardMetricMiniCard(
+                        title = "Motion",
+                        value = String.format(Locale.US, "%.2f", liveVitals.accelMagnitude),
+                        unit = "g",
+                        sub = "Stillness",
+                        icon = Icons.AutoMirrored.Filled.DirectionsRun,
+                        iconColor = ColorMotion,
+                        iconBg = if (isDarkMode) ColorMotion.copy(alpha = 0.2f) else ColorMotionBgLight,
+                        waveform = motionWaveform,
+                        waveColor = ColorMotion,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             }
 
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(20.dp))
-                    .border(1.dp, stressColor.copy(alpha = 0.3f), RoundedCornerShape(20.dp))
-                    .testTag("dashboard_stress_gauge"),
-                color = DarkSurface
-            ) {
-                Column(
+            // 5. Migraine Risk Card (matching stresscarepp.netlify.app)
+            item {
+                Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .shadow(3.dp, RoundedCornerShape(18.dp))
+                        .clickable { viewModel.openMigraineDetail() }
+                        .testTag("dashboard_migraine_card"),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isDarkMode) Color(0xFF064E3B) else MigraineCardBgStart
+                    ),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp,
+                        if (isDarkMode) Color(0xFF059669) else MigraineBorderLight
+                    )
                 ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "REAL-TIME STRESS LEVEL",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TextSecondary,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp
-                        )
-
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(20.dp))
-                                .background(stressColor.copy(alpha = 0.2f))
-                                .border(1.dp, stressColor.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
-                                .padding(horizontal = 10.dp, vertical = 4.dp)
-                        ) {
-                            Text(
-                                text = liveVitals.stressCategory.label.uppercase(),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = stressColor,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    // Circular Stress Meter
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.size(170.dp)
-                    ) {
-                        // Background track
-                        CircularProgressIndicator(
-                            progress = { 1f },
-                            modifier = Modifier.size(170.dp),
-                            color = DarkBorder,
-                            strokeWidth = 14.dp,
-                            strokeCap = StrokeCap.Round
-                        )
-                        // Active colored progress
-                        CircularProgressIndicator(
-                            progress = { liveVitals.stressScore / 100f },
-                            modifier = Modifier.size(170.dp),
-                            color = stressColor,
-                            strokeWidth = 14.dp,
-                            strokeCap = StrokeCap.Round
-                        )
-
-                        // Center content
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = "${liveVitals.stressScore}%",
-                                style = MaterialTheme.typography.displayMedium,
-                                color = TextPrimary,
-                                fontWeight = FontWeight.Black
-                            )
-                            Text(
-                                text = "Autonomic Index",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = TextSecondary
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    // AI Insight Box
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .border(1.dp, DarkBorder, RoundedCornerShape(12.dp)),
-                        color = DarkSurfaceElevated
-                    ) {
                         Row(
-                            modifier = Modifier.padding(12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            modifier = Modifier.weight(1f)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Lightbulb,
-                                contentDescription = "AI Tip",
-                                tint = CyanPrimary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Text(
-                                text = liveVitals.aiInsight,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = TextPrimary,
-                                lineHeight = 18.sp
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        // 4. Migraine Risk Summary Banner
-        item {
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(
-                        Brush.linearGradient(
-                            listOf(
-                                AmberWarning.copy(alpha = 0.15f),
-                                DarkSurfaceElevated
-                            )
-                        )
-                    )
-                    .border(1.dp, AmberWarning.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
-                    .clickable { viewModel.selectTab(MainTab.ANALYTICS) }
-                    .testTag("dashboard_migraine_banner"),
-                color = Color.Transparent
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        modifier = Modifier.weight(1f),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(42.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(AmberWarning.copy(alpha = 0.25f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Warning,
-                                contentDescription = "Migraine Risk",
-                                tint = AmberWarning,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-
-                        Column {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(CircleShape)
+                                    .background(if (isDarkMode) Color(0xFF059669) else Color(0xFFD1FAE5)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Shield,
+                                    contentDescription = null,
+                                    tint = if (isDarkMode) Color.White else MigraineTextLight,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Column {
                                 Text(
                                     text = "Migraine Risk: Medium (58/100)",
                                     style = MaterialTheme.typography.titleSmall,
-                                    color = TextPrimary,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isDarkMode) Color.White else MigraineTextLight
+                                )
+                                Text(
+                                    text = "Night HRV drop & GSR spikes detected. Tap for insights.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (isDarkMode) Color(0xFFA7F3D0) else Color(0xFF059669),
+                                    fontSize = 11.sp
                                 )
                             }
-                            Text(
-                                text = "Night HRV drop & GSR spikes detected. Tap for insights.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = TextSecondary
-                            )
                         }
+
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = "View Details",
+                            tint = if (isDarkMode) Color(0xFFA7F3D0) else MigraineTextLight,
+                            modifier = Modifier.size(16.dp)
+                        )
                     }
-
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = "Open Insights",
-                        tint = AmberWarning,
-                        modifier = Modifier.size(20.dp)
-                    )
                 }
             }
-        }
 
-        // 5. Section Title: Sensor Telemetry
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            // 6. Quick Actions Section (5 cards matching stresscarepp.netlify.app)
+            item {
                 Text(
-                    text = "PHYSIOLOGICAL SENSORS",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = TextSecondary,
+                    text = "Quick Actions",
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
-                )
-                Text(
-                    text = "50 Hz Streaming",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = CyanPrimary
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.padding(top = 4.dp, bottom = 2.dp)
                 )
             }
-        }
 
-        // 6. 4 Metric Cards (2x2 Grid)
-        item {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    // Metric 1: Heart Rate (MAX30102)
-                    MetricCard(
-                        title = "Heart Rate",
-                        sensorModel = "MAX30102 PPG",
-                        value = "${liveVitals.heartRate}",
-                        unit = "BPM",
-                        statusText = "Resting: 60-100",
-                        accentColor = ColorHeartRate,
-                        icon = Icons.Default.Favorite,
-                        waveform = hrWaveform,
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    // Metric 2: GSR Conductance (Grove GSR)
-                    MetricCard(
-                        title = "Skin Conductance",
-                        sensorModel = "Grove GSR",
-                        value = "${liveVitals.gsrMicrosiemens}",
-                        unit = "µS",
-                        statusText = "Tonic: Moderate",
-                        accentColor = ColorGSR,
-                        icon = Icons.Default.Waves,
-                        waveform = gsrWaveform,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    // Metric 3: Skin Temperature (MLX90614)
-                    MetricCard(
-                        title = "Skin Temp",
-                        sensorModel = "MLX90614 IR",
-                        value = "${liveVitals.skinTempCelsius}",
-                        unit = "°C",
-                        statusText = "Optimal: 36.5°",
-                        accentColor = ColorSkinTemp,
-                        icon = Icons.Default.Thermostat,
-                        waveform = tempWaveform,
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    // Metric 4: Motion Activity (MPU6050)
-                    MetricCard(
-                        title = "Motion IMU",
-                        sensorModel = "MPU6050 6-Axis",
-                        value = "${liveVitals.accelMagnitude}",
-                        unit = "g",
-                        statusText = "Resting State",
-                        accentColor = ColorMotion,
-                        icon = Icons.Default.TrendingUp,
-                        waveform = motionWaveform,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-        }
-
-        // 7. Section Title: Quick Actions
-        item {
-            Text(
-                text = "QUICK ACTIONS",
-                style = MaterialTheme.typography.labelSmall,
-                color = TextSecondary,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp
-            )
-        }
-
-        // 8. Quick Actions Grid
-        item {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    QuickActionButton(
-                        title = "Live Monitor",
-                        subtitle = "ESP32 Realtime",
-                        icon = Icons.Default.PlayArrow,
-                        accentColor = CyanPrimary,
+                    QuickActionMiniCard(
+                        title = "Live\nMonitor",
+                        icon = Icons.Default.MonitorHeart,
+                        iconColor = Color(0xFF2563EB),
+                        bgColor = if (isDarkMode) Color(0xFF1E293B) else Color(0xFFDBEAFE),
                         modifier = Modifier.weight(1f),
                         onClick = { viewModel.selectTab(MainTab.MONITORING) }
                     )
-
-                    QuickActionButton(
-                        title = "Breathing",
-                        subtitle = "Box 4-4-4-4",
+                    QuickActionMiniCard(
+                        title = "Box\nBreathing",
                         icon = Icons.Default.Air,
-                        accentColor = EmeraldAccent,
+                        iconColor = Color(0xFF0D9488),
+                        bgColor = if (isDarkMode) Color(0xFF1E293B) else Color(0xFFCCFBF1),
                         modifier = Modifier.weight(1f),
                         onClick = { viewModel.setOverlay(ActiveOverlay.GUIDED_BREATHING) }
                     )
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    QuickActionButton(
-                        title = "Stress History",
-                        subtitle = "7-Day Trends",
+                    QuickActionMiniCard(
+                        title = "History\nTrends",
                         icon = Icons.Default.History,
-                        accentColor = PurpleAccent,
+                        iconColor = Color(0xFF4F46E5),
+                        bgColor = if (isDarkMode) Color(0xFF1E293B) else Color(0xFFE0E7FF),
                         modifier = Modifier.weight(1f),
                         onClick = { viewModel.selectTab(MainTab.ANALYTICS) }
                     )
-
-                    QuickActionButton(
-                        title = "Sleep & Migraine",
-                        subtitle = "Risk Forecast",
+                    QuickActionMiniCard(
+                        title = "Sleep &\nMigraine",
                         icon = Icons.Default.BarChart,
-                        accentColor = AmberWarning,
+                        iconColor = Color(0xFFCA8A04),
+                        bgColor = if (isDarkMode) Color(0xFF1E293B) else Color(0xFFFEF9C3),
                         modifier = Modifier.weight(1f),
-                        onClick = { viewModel.selectTab(MainTab.ANALYTICS) }
+                        onClick = { viewModel.openMigraineDetail() }
+                    )
+                    QuickActionMiniCard(
+                        title = "Weekly\nPSS",
+                        icon = Icons.Default.RateReview,
+                        iconColor = Color(0xFF7C3AED),
+                        bgColor = if (isDarkMode) Color(0xFF1E293B) else Color(0xFFEDE9FE),
+                        modifier = Modifier.weight(1f),
+                        onClick = { viewModel.openFeedback() }
                     )
                 }
-
-                QuickActionButton(
-                    title = "Clinical PSS-10 Assessment",
-                    subtitle = "10-Question Standardized Perceived Stress Scale",
-                    icon = Icons.Default.RateReview,
-                    accentColor = CyanPrimary,
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = { viewModel.setOverlay(ActiveOverlay.PSS_QUESTIONNAIRE) }
-                )
             }
         }
     }
 }
 
 @Composable
-fun MetricCard(
+private fun DashboardMetricMiniCard(
     title: String,
-    sensorModel: String,
     value: String,
     unit: String,
-    statusText: String,
-    accentColor: Color,
+    sub: String,
     icon: ImageVector,
+    iconColor: Color,
+    iconBg: Color,
     waveform: List<Float>,
+    waveColor: Color,
     modifier: Modifier = Modifier
 ) {
-    Surface(
-        modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .border(1.dp, DarkBorder, RoundedCornerShape(16.dp)),
-        color = DarkSurface
+    Card(
+        modifier = modifier.shadow(2.dp, RoundedCornerShape(14.dp)),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = title,
-                        tint = accentColor,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary,
-                        fontWeight = FontWeight.Medium
-                    )
-                }
-
-                Text(
-                    text = sensorModel,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = TextMuted,
-                    fontSize = 9.sp
-                )
-            }
-
-            Row(
-                verticalAlignment = Alignment.Bottom,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = value,
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = TextPrimary,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = unit,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = accentColor,
-                    modifier = Modifier.padding(bottom = 4.dp),
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-
-            // Live Waveform Sparkline
-            SparklineWaveform(
-                dataPoints = waveform,
-                lineColor = accentColor,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(36.dp)
-            )
-
-            Text(
-                text = statusText,
-                style = MaterialTheme.typography.labelSmall,
-                color = TextSecondary,
-                fontSize = 11.sp
-            )
-        }
-    }
-}
-
-@Composable
-fun QuickActionButton(
-    title: String,
-    subtitle: String,
-    icon: ImageVector,
-    accentColor: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier
-            .clip(RoundedCornerShape(14.dp))
-            .border(1.dp, DarkBorder, RoundedCornerShape(14.dp))
-            .clickable { onClick() },
-        color = DarkSurface
-    ) {
-        Row(
-            modifier = Modifier.padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 8.dp),
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(accentColor.copy(alpha = 0.15f))
-                    .border(1.dp, accentColor.copy(alpha = 0.3f), RoundedCornerShape(10.dp)),
+                    .size(28.dp)
+                    .clip(CircleShape)
+                    .background(iconBg),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = icon,
-                    contentDescription = title,
-                    tint = accentColor,
-                    modifier = Modifier.size(20.dp)
+                    contentDescription = null,
+                    tint = iconColor,
+                    modifier = Modifier.size(15.dp)
                 )
             }
 
-            Column {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 9.5.sp,
+                maxLines = 1
+            )
+
+            Row(verticalAlignment = Alignment.Bottom) {
                 Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleSmall,
-                    color = TextPrimary,
-                    fontWeight = FontWeight.SemiBold
+                    text = value,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontSize = 14.sp
                 )
+                Spacer(modifier = Modifier.width(2.dp))
                 Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary,
-                    fontSize = 12.sp
+                    text = unit,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 8.5.sp
                 )
             }
+
+            // Real-time Sparkline Waveform Canvas
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(20.dp)
+                    .padding(top = 2.dp)
+            ) {
+                SparklineWaveform(
+                    dataPoints = waveform,
+                    lineColor = waveColor,
+                    strokeWidth = 3f,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun QuickActionMiniCard(
+    title: String,
+    icon: ImageVector,
+    iconColor: Color,
+    bgColor: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier
+            .shadow(2.dp, RoundedCornerShape(14.dp))
+            .clickable { onClick() },
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 10.dp, horizontal = 2.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(5.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(bgColor),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = iconColor,
+                    modifier = Modifier.size(17.dp)
+                )
+            }
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 9.sp,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                lineHeight = 11.sp
+            )
         }
     }
 }
