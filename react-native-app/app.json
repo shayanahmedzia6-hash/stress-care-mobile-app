@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "StressCare",
+    "slug": "stresscare-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#deeeff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.stresscare.app",
+      "infoPlist": {
+        "NSBluetoothAlwaysUsageDescription": "StressCare requires Bluetooth Low Energy access to continuously stream heart rate, EDA, and temperature metrics from your wearable stress monitor band.",
+        "NSBluetoothPeripheralUsageDescription": "StressCare pairs with your wearable band to collect stress telemetry.",
+        "UIBackgroundModes": ["bluetooth-central", "audio"]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#deeeff"
+      },
+      "package": "com.stresscare.app",
+      "permissions": [
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_ADMIN",
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.BLUETOOTH_SCAN",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.VIBRATE",
+        "android.permission.FOREGROUND_SERVICE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}

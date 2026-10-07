@@ -69,14 +69,14 @@ fun AudioPlayerOverlay(
     val currentTrack by audioEngine.currentTrack.collectAsState()
     val currentIndex by audioEngine.currentTrackIndex.collectAsState()
     val progress by audioEngine.playbackProgress.collectAsState()
-    val volume by audioEngine.volumeLevel.collectAsState()
+    val volume by audioEngine.volume.collectAsState()
     val isDarkMode by viewModel.isDarkMode.collectAsState()
 
     val elapsedSeconds = (progress * currentTrack.durationSeconds).toInt()
     val elapsedStr = String.format("%02d:%02d", elapsedSeconds / 60, elapsedSeconds % 60)
     val totalStr = String.format("%02d:%02d", currentTrack.durationSeconds / 60, currentTrack.durationSeconds % 60)
 
-    val themeColor = Color(currentTrack.colorHex)
+    val themeColor = Color(currentTrack.themeColorHex)
 
     val infiniteTransition = rememberInfiniteTransition(label = "audio_bars")
     val barPulse by infiniteTransition.animateFloat(
@@ -222,7 +222,7 @@ fun AudioPlayerOverlay(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "${currentTrack.carrierNote} • ${currentTrack.beatType}",
+                    text = "${currentTrack.category} • ${currentTrack.frequencyHz.toInt()} Hz Harmonic",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

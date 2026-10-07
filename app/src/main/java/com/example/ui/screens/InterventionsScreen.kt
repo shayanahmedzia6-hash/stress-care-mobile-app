@@ -34,6 +34,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -340,7 +341,7 @@ fun InterventionsScreen(
                             }
 
                             IconButton(
-                                onClick = { viewModel.toggleAudioPlay() },
+                                onClick = { viewModel.audioEngine.togglePlayPause() },
                                 modifier = Modifier
                                     .size(42.dp)
                                     .clip(CircleShape)
@@ -372,7 +373,7 @@ fun InterventionsScreen(
                                     ),
                                     modifier = Modifier
                                         .weight(1f)
-                                        .clickable { viewModel.selectAudioTrack(track) }
+                                        .clickable { viewModel.audioEngine.selectTrack(PRESET_AUDIO_TRACKS.indexOf(track)) }
                                 ) {
                                     Column(
                                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
@@ -386,7 +387,7 @@ fun InterventionsScreen(
                                             maxLines = 1
                                         )
                                         Text(
-                                            text = track.carrierNote,
+                                            text = track.category,
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             fontSize = 9.sp

@@ -254,8 +254,8 @@ fun BlePairingModal(
                     items(discoveredDevices) { device ->
                         DeviceRowItem(
                             device = device,
-                            onConnect = { viewModel.bleManager.connectToDevice(device) },
-                            onDisconnect = { viewModel.bleManager.disconnect() }
+                            onConnect = { viewModel.bleManager.connectDevice(device) },
+                            onDisconnect = { viewModel.bleManager.disconnectDevice() }
                         )
                     }
                 }

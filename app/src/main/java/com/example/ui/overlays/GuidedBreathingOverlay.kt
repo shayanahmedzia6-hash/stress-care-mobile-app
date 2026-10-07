@@ -56,11 +56,13 @@ fun GuidedBreathingOverlay(
     onDismiss: () -> Unit
 ) {
     val phase by viewModel.breathingPhase.collectAsState()
-    val secondsInPhase by viewModel.secondsInPhase.collectAsState()
-    val totalSecondsRemaining by viewModel.breathingTotalSecondsRemaining.collectAsState()
+    val phaseProgress by viewModel.breathingPhaseProgress.collectAsState()
+    val totalSecondsRemaining by viewModel.breathingTotalRemainingSeconds.collectAsState()
     val cycleCount by viewModel.breathingCycleCount.collectAsState()
     val liveVitals by viewModel.bleManager.liveVitals.collectAsState()
     val isDarkMode by viewModel.isDarkMode.collectAsState()
+
+    val secondsInPhase = ((1f - phaseProgress) * phase.seconds).toInt().coerceAtLeast(1)
 
     val targetSphereScale = when (phase) {
         BreathingPhase.INHALE -> 1.0f

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -247,14 +248,14 @@ fun PssQuestionnaireOverlay(
                                 Triple(4, "Calm", StatusOnlineGreen),
                                 Triple(5, "Relaxed", Color(0xFF0D9488))
                             ).forEach { (score, label, color) ->
-                                val isSelected = mood == score
+                                val isSelected = mood == label || mood == "$score"
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.spacedBy(4.dp),
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(10.dp))
                                         .background(if (isSelected) color.copy(alpha = 0.15f) else Color.Transparent)
-                                        .clickable { viewModel.setPssMood(score) }
+                                        .clickable { viewModel.setPssMood(label) }
                                         .padding(horizontal = 6.dp, vertical = 6.dp)
                                 ) {
                                     Box(
@@ -336,14 +337,14 @@ fun PssQuestionnaireOverlay(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clip(RoundedCornerShape(8.dp))
-                                        .clickable { viewModel.updatePssAnswer(q.id, optVal) }
+                                        .clickable { viewModel.setPssAnswer(q.id, optVal) }
                                         .padding(vertical = 4.dp, horizontal = 4.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     RadioButton(
                                         selected = isChecked,
-                                        onClick = { viewModel.updatePssAnswer(q.id, optVal) },
+                                        onClick = { viewModel.setPssAnswer(q.id, optVal) },
                                         colors = RadioButtonDefaults.colors(
                                             selectedColor = MaterialTheme.colorScheme.primary
                                         )
