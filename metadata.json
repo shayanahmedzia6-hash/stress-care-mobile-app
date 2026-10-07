@@ -1,0 +1,6 @@
+{
+  "name": "StressCare",
+  "description": "Wearable stress monitoring, interventions, and biometric analytics",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
