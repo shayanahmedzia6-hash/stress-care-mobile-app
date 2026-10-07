@@ -1,18 +1,45 @@
-*.iml
-.gradle
-.kotlin
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
-local.properties
+# Dependencies
+node_modules/
+
+# Expo / Metro
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Keep android/ios after `expo prebuild` for CI/APK builds.
+# Uncomment to ignore generated native projects in managed-only workflow:
+# android/
+# ios/
+
+# Env / secrets
 .env
-debug.keystore
+.env.*
+!.env.example
+
+# OS / IDE
+.DS_Store
+*.iml
+.idea/
+.vscode/
+
+# Debug / logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.log
+
+# Native leftovers
+*.jks
+*.keystore
+!debug.keystore
+local.properties
+.gradle/
+build/
+.cxx/
+*.apk
+*.aab
+
+android/local.properties
+
+builds/

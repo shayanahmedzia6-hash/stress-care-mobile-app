@@ -1,45 +1,61 @@
-# StressCare - Multiplatform Mobile System
+# StressCare Mobile (React Native / Expo)
 
-This repository provides both **Native Android** and **React Native (Android + iOS)** implementations of the StressCare biometric stress monitoring & intervention application.
+Cross-platform StressCare app for wearable stress monitoring, interventions, and analytics.
 
----
+## App flow
+1. **Onboarding** (Skip / Next)
+2. **Login / Sign up**
+3. **Main app** (Dashboard, Monitoring, Analytics, Interventions, Profile)
 
-## 📁 Repository Structure
-
-| Directory | Platform | Framework / Tech Stack |
-| :--- | :--- | :--- |
-| **`/react-native-app`** | **Android + iOS** | **React Native / Expo (TypeScript, SVG, Audio, BLE)** |
-| **`/app`** | **Native Android** | **Kotlin, Jetpack Compose, Material 3, Room, BLE** |
-
----
-
-## 📱 1. React Native (Android + iOS) - `/react-native-app`
-
-The complete cross-platform React Native source code is located in the **`react-native-app/`** folder. It is designed to run seamlessly on both iPhone (iOS) and Android devices.
-
-### Quick Start:
+## Setup
 ```bash
-cd react-native-app
 npm install
-
-# Run on iOS (Simulator or iPhone via Expo Go)
-npm run ios
-# or: npm run start
-
-# Run on Android (Emulator or Phone)
-npm run android
+npx expo start
 ```
 
-### Key Modules:
-- **`App.tsx`**: Main application coordinating all screens and overlays.
-- **`src/screens/`**: Dashboard, Monitoring, Analytics, Interventions, Profile.
-- **`src/overlays/`**: BLE Device Pairing, 60s Sensor Calibration, 4-4-4-4 Box Breathing, Binaural Audio Player, PSS-10 Questionnaire, Migraine Risk Model, Notifications, Feedback, Auth, and Onboarding.
-- **`src/theme/colors.ts`**: Pure pastel light mode (`#deeeff`, `#f5f8ff`, `#ffffff`) and modern dark mode.
-- **`ios/`**: Podfile and Info.plist preconfigured for iOS Bluetooth and Audio background modes.
+### Run with Expo Go (recommended for demo)
+```bash
+npx expo start
+# Scan QR with Expo Go on Android phone
+```
 
----
+### Android APK (local)
+> Windows tip: folder path mein spaces (`stresscare mobile app`) CMake break kar sakte hain.
+> Space-free junction se build karo: `C:\stresscare-rn` → yeh project.
 
-## 🤖 2. Native Android - `/app`
-The native Android codebase powers the instant live browser emulator within AI Studio:
-- Built with Kotlin and Jetpack Compose.
-- Gradle build configuration via `build.gradle.kts`.
+```bash
+npx expo prebuild --platform android
+# from C:\stresscare-rn\android (junction without spaces):
+.\gradlew.bat assembleDebug
+# APK: android/app/build/outputs/apk/debug/app-debug.apk
+# also copied to: builds/StressCare-debug.apk
+```
+
+### Android APK (EAS cloud — no local NDK needed)
+```bash
+npx eas-cli login
+npx eas-cli build --platform android --profile preview
+```
+
+## Cloud CI (Codemagic / Appcircle)
+- Project type: **React Native** / **Expo**
+- Project path: `/` (repo root is the RN app)
+- Requires `package.json`, `app.json`, `index.js`, and `android/` (already generated)
+
+## Structure
+```
+├── App.tsx                 # Root navigator (onboarding → auth → main)
+├── index.js                # Expo entry
+├── app.json                # Expo config
+├── src/
+│   ├── screens/            # Onboarding, Auth, Dashboard, ...
+│   ├── overlays/           # BLE, breathing, PSS, etc.
+│   ├── components/
+│   ├── context/
+│   ├── theme/
+│   └── types/
+└── assets/
+```
+
+> The original Kotlin Android project lives outside this repo at  
+> `../kotlin app/` (sibling folder under `stresscare mobile app`).
